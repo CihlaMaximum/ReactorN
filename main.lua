@@ -881,7 +881,7 @@ local lastReactorCount     = 0
 local reactorsClearedOnce  = false
 local explosionNotified    = false
 
-local ME_CHECK_INTERVAL    = 60       -- интервал проверки ME в секундах (1 минута)
+local ME_CHECK_INTERVAL    = 5       -- интервал проверки ME в секундах (1 минута)
 local FLUID_LABEL         = "fluid.low_temperature_refrigerant"
 local FLUID_DROP_FILE = "/home/data/fluidDropInfo.txt"
 
