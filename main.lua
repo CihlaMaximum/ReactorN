@@ -1347,8 +1347,6 @@ if now - lastRodTick >= 1 then
     end
     lastRodTick = now
 end
-
-end
     
     local meData = getMEControllerStats()
     local playersData_processed = processPlayersStatus()
