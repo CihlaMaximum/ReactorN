@@ -742,7 +742,7 @@ local function updateProgram()
         tempPath
     )
 
-    local downloadSuccess = shell.execute(command)
+    
 
     if not downloadSuccess or not filesystem.exists(tempPath) then
         print("Ошибка загрузки новой версии.")
@@ -861,6 +861,7 @@ local currentFluidCount   = 0
 local meControllerAvailable = false
 local shutdownReactors    = {} -- Таблица для хранения адресов отключенных реакторов
 local reactorDepletionTime = {}
+local lastRodTick = computer.uptime()
 
 function saveFileData(fileName, data)
     ensureDirectoryExists("/home/data")
@@ -1070,7 +1071,8 @@ local function getNuclearReactorsStats()
         local success8, isOn = pcall(function() return r.hasWork() end) -- Проверка состояния включения
         local success9, depletionTime = pcall(function() return getReactorRodTime(r) end)
 
-depletionTime = success9 and depletionTime or 0
+        depletionTime = success9 and depletionTime or 0
+        reactorDepletionTime[i] = depletionTime
         
         gen = success2 and gen or 0
         mb = success3 and mb or 0
@@ -1138,7 +1140,10 @@ local function renderSingleReactor(reactor, x, y, reactorWidth, reactorHeight)
     gui.text(x, y + 2, "&fУровень: &e" .. string.format("%d", reactor.level))
     gui.text(x, y + 3, "&fЭнергия: &6" .. formatReactorEnergy(reactor.energyGen))
     gui.text(x, y + 4, "&fТемп:    " .. tempColor .. reactor.temp .. "°C")
-    gui.text(x, y + 5,"&eСтержни: " ..secondsToHMS(reactor.depletionTime or 0))
+    local displayedTime = reactorDepletionTime[reactor.id]
+    or reactor.depletionTime
+    or 0
+    gui.text(x, y + 5,"&eСтержни: " ..secondsToHMS(displayedTime))
     if reactor.type == "&bЖидкостный" then
         gui.text(x, y + 6, "&fРасход:  &b" .. reactor.coolant .. " mB/s")
     end
@@ -1150,9 +1155,9 @@ end
 local function renderNuclearReactors(stats)
     local b = getFrameInnerBounds("reactors")
     local cols = 3
-    local reactorWidth = 34
+    local reactorWidth = 30
     local reactorHeight = 8
-    local separatorWidth = 4
+    local separatorWidth = 6
     local totalWidth = cols * reactorWidth + (cols - 1) * separatorWidth
     local startX = b.x + math.floor((b.width - totalWidth) / 2)
 
@@ -1183,7 +1188,7 @@ local function renderNuclearReactors(stats)
                 local colIndex = (reactorUpdateIndex - 1) % cols
                 local rowIndex = math.floor((reactorUpdateIndex - 1) / cols)
                 
-                local x = b.x + colIndex * (reactorWidth + separatorWidth)
+                local x = startX + colIndex * (reactorWidth + separatorWidth)
                 local y = b.y + rowIndex * (reactorHeight + 1)
                 
                 renderSingleReactor(reactor, x, y, reactorWidth, reactorHeight)
@@ -1278,6 +1283,27 @@ if chatBox then
 end
 
 while true do
+        local now = computer.uptime()
+
+    if now - lastRodTick >= 1 then
+
+        for i = 1, #lastReactorData do
+
+            if lastReactorData[i]
+            and lastReactorData[i].depletionTime
+            and lastReactorData[i].depletionTime > 0 then
+
+                lastReactorData[i].depletionTime =
+                    lastReactorData[i].depletionTime - 1
+
+            end
+
+        end
+
+        lastRodTick = now
+
+    end
+    
     local meData = getMEControllerStats()
     local playersData_processed = processPlayersStatus()
 
