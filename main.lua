@@ -1150,9 +1150,12 @@ end
 local function renderNuclearReactors(stats)
     local b = getFrameInnerBounds("reactors")
     local cols = 3
-    local reactorWidth = math.floor(b.width / cols) - 1
+    local reactorWidth = 34
     local reactorHeight = 8
-    local separatorWidth = 1
+    local separatorWidth = 4
+    local totalWidth = cols * reactorWidth + (cols - 1) * separatorWidth
+    local startX = b.x + math.floor((b.width - totalWidth) / 2)
+
     
     -- Первый раз отрисовываем все реакторы
     if #lastReactorData == 0 then
@@ -1161,7 +1164,7 @@ local function renderNuclearReactors(stats)
             local colIndex = (i - 1) % cols
             local rowIndex = math.floor((i - 1) / cols)
             
-            local x = b.x + colIndex * (reactorWidth + separatorWidth)
+            local x = startX + colIndex * (reactorWidth + separatorWidth)
             local y = b.y + rowIndex * (reactorHeight + 1)
             
             renderSingleReactor(reactor, x, y, reactorWidth, reactorHeight)
