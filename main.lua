@@ -63,6 +63,13 @@ local buttons = {
         y = 8,
         width = 17,
         text = "[ ПЕРЕЗАПУСК ]"
+    },
+
+    exit = {
+        x = 41,
+        y = 8,
+        width = 17,
+        text = "[ ВЫХОД ]"
     }
 }
 
@@ -679,6 +686,11 @@ local function drawControlButtons()
         buttons.restart.y,
         "&0&6" .. buttons.restart.text
     )
+    gui.text(
+    buttons.exit.x,
+    buttons.exit.y,
+    "&0&4" .. buttons.exit.text
+)
 end
 
 local function isInsideButton(x, y, button)
@@ -693,6 +705,16 @@ local function restartComputer()
     print("Перезагрузка компьютера...")
 
     computer.shutdown(true)
+end
+
+local function exitProgram()
+
+    term.clear()
+
+    print("Мониторинг остановлен")
+
+    os.exit()
+
 end
 
 local function updateProgram()
@@ -838,6 +860,13 @@ local function handleTouch(screenAddress, x, y, button, player)
         return true
     end
 
+    if isInsideButton(x, y, buttons.exit) then
+        exitProgram()
+        return true
+    end
+
+
+    
     return false
 end
 
