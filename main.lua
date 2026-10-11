@@ -13,7 +13,7 @@ local PROGRAM_PATH = "/home/main.lua"
 local BACKUP_PATH = "/home/main_backup.lua"
 
 local UPDATE_URL =
-    "https://raw.githubusercontent.com/CihlaMaximum/ReactorN/refs/heads/main/main.lua"
+    "https://raw.githubusercontent.com/CihlaMaximum/ReactorN/main/main.lua"
 
 local MEController = component.isAvailable("me_controller") and component.me_controller or nil
 local gpu = component.isAvailable("gpu") and component.gpu or nil
@@ -734,11 +734,13 @@ local function updateProgram()
         filesystem.remove(tempPath)
     end
 
-    local command =
+    local downloadSuccess =
+    shell.execute(
         "wget -fq " ..
         UPDATE_URL ..
         " " ..
         tempPath
+    )
 
     local downloadSuccess = shell.execute(command)
 
