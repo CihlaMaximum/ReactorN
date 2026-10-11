@@ -937,6 +937,9 @@ local function checkFluidInME()
     end
     
     lastMECheck = currentTime
+    if chatBox then
+    chatBox.say("ME CHECK")
+end
     
     -- Проверяем доступность ME контроллера
     if not component.isAvailable("me_controller") then
@@ -1083,6 +1086,7 @@ local function getNuclearReactorsStats()
     local fluidCount = 0
     if component.isAvailable("me_controller") then
         fluidCount = checkFluidInME()
+        
         if fluidCount <= MIN_COUNT_FLUID_DROP then
             deactivationReactors() 
         else
