@@ -891,7 +891,7 @@ local meControllerAvailable = false
 local shutdownReactors    = {} -- Таблица для хранения адресов отключенных реакторов
 local reactorDepletionTime = {}
 local lastRodTick = computer.uptime()
-local lastRodRefresh = computer.uptime()
+
 
 
 function saveFileData(fileName, data)
@@ -1111,12 +1111,19 @@ local function getNuclearReactorsStats()
         local success6, reactorLevel = pcall(function() return r.getReactorLevel() end)
         local success7, reactorType = pcall(function() return r.isActiveCooling() end)
         local success8, isOn = pcall(function() return r.hasWork() end) -- Проверка состояния включения
-        local success9, depletionTime = pcall(function() return getReactorRodTime(r) end)
-
-        depletionTime = success9 and depletionTime or 0
         if reactorDepletionTime[i] == nil then
-            reactorDepletionTime[i] = depletionTime
+
+        local success9, depletionTime =
+        pcall(function()
+            return getReactorRodTime(r)
+        end)
+
+        reactorDepletionTime[i] =
+        success9 and depletionTime or 0
+
         end
+
+        local depletionTime = reactorDepletionTime[i]
         
         gen = success2 and gen or 0
         mb = success3 and mb or 0
@@ -1329,21 +1336,16 @@ end
 while true do
         
     local now = computer.uptime()
-    if now - lastRodTick >= 1 then
-        for i = 1, #reactorDepletionTime do
+if now - lastRodTick >= 1 then
+    for i = 1, #reactorDepletionTime do
         if reactorDepletionTime[i]
         and reactorDepletionTime[i] > 0 then
+
             reactorDepletionTime[i] =
                 reactorDepletionTime[i] - 1
         end
     end
     lastRodTick = now
-        if now - lastRodRefresh >= 60 then
-
-    reactorDepletionTime = {}
-
-    lastRodRefresh = now
-
 end
 
 end
@@ -1357,6 +1359,8 @@ end
 
     drawControlButtons()
 
+    lastReactorData = {}
+    
     updateReactors()
 
     handleChatMessages(playersData_processed.changes)
