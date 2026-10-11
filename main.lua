@@ -890,7 +890,7 @@ depletionTime = success9 and depletionTime or 0
             energyGen    = gen,          -- Энергия
             temp         = t,            -- Температура
             coolant      = mb,            -- Потребление жидкости (если жидкостный)
-            depletionTime = depletionTime,
+            depletionTime = depletionTime
         }
 
         totalEnergy  = totalEnergy  + gen
