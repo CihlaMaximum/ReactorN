@@ -889,7 +889,7 @@ depletionTime = success9 and depletionTime or 0
             type         = isLiquidCooled and "&bЖидкостный" or "&eВоздушный", -- Тип реактора
             energyGen    = gen,          -- Энергия
             temp         = t,            -- Температура
-            coolant      = mb            -- Потребление жидкости (если жидкостный)
+            coolant      = mb,            -- Потребление жидкости (если жидкостный)
             depletionTime = depletionTime,
         }
 
