@@ -918,7 +918,7 @@ local function hasReactorChanged(newReactor, oldReactor)
            newReactor.energyGen ~= oldReactor.energyGen or
            newReactor.temp ~= oldReactor.temp or
            newReactor.coolant ~= oldReactor.coolant or
-           newReactor.type ~= oldReactor.type
+           newReactor.type ~= oldReactor.type or
             newReactor.depletionTime ~= oldReactor.depletionTime
 end
 
@@ -939,7 +939,7 @@ local function renderSingleReactor(reactor, x, y, reactorWidth, reactorHeight)
     gui.text(x, y + 2, "&fУровень: &e" .. string.format("%d", reactor.level))
     gui.text(x, y + 3, "&fЭнергия: &6" .. formatReactorEnergy(reactor.energyGen))
     gui.text(x, y + 4, "&fТемп:    " .. tempColor .. reactor.temp .. "°C")
-    gui.text(x, y + 5,"&e⏳ " ..secondsToHMS(reactor.depletionTime or 0)
+    gui.text(x, y + 5,"&e⏳ " ..secondsToHMS(reactor.depletionTime or 0))
     if reactor.type == "&bЖидкостный" then
         gui.text(x, y + 6, "&fРасход:  &b" .. reactor.coolant .. " mB/s")
     end
