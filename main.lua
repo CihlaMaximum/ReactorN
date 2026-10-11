@@ -843,7 +843,7 @@ end
 
 
 local REACTOR_FILE         = "/home/data/reactorInfo.txt"
-local REACTOR_UPDATE_INT   = 2
+local REACTOR_UPDATE_INT   = 1
 local REACTOR_TEMP_WARN    = 950
 local MAX_REACTORS         = 6
 
@@ -986,13 +986,13 @@ end
 
 local function deactivationReactors()
     local reactorsAddr = getComponentsByType("htc_reactors_nuclear_reactor")
-    
+    local stop_reactor = false
     for i = 1, #reactorsAddr do
         local success, r = pcall(function() return component.proxy(reactorsAddr[i].address) end)
         if not success then
             goto continue
         end
-        local stop_reactor = false
+        
         local success_status, hasWork = pcall(function() return r.hasWork() end)
         local success_type, reactorType = pcall(function() return r.isActiveCooling() end)
         if success_type and reactorType then
@@ -1283,26 +1283,18 @@ if chatBox then
 end
 
 while true do
-        local now = computer.uptime()
-
+        
+    local now = computer.uptime()
     if now - lastRodTick >= 1 then
-
-        for i = 1, #lastReactorData do
-
-            if lastReactorData[i]
-            and lastReactorData[i].depletionTime
-            and lastReactorData[i].depletionTime > 0 then
-
-                lastReactorData[i].depletionTime =
-                    lastReactorData[i].depletionTime - 1
-
-            end
-
+        for i = 1, #reactorDepletionTime do
+        if reactorDepletionTime[i]
+        and reactorDepletionTime[i] > 0 then
+            reactorDepletionTime[i] =
+                reactorDepletionTime[i] - 1
         end
-
-        lastRodTick = now
-
     end
+    lastRodTick = now
+end
     
     local meData = getMEControllerStats()
     local playersData_processed = processPlayersStatus()
