@@ -882,7 +882,7 @@ local reactorsClearedOnce  = false
 local explosionNotified    = false
 
 local ME_CHECK_INTERVAL    = 60       -- интервал проверки ME в секундах (1 минута)
-local FLUID_LABEL         = "low_temperature_refrigerant"
+local FLUID_LABEL         = "fluid.low_temperature_refrigerant"
 local FLUID_DROP_FILE = "/home/data/fluidDropInfo.txt"
 
 local lastMECheck         = 0
@@ -967,14 +967,18 @@ local function checkFluidInME()
     -- Ищем нужную жидкость по label
     currentFluidCount = 0
     for _, item in ipairs(items) do
-        if chatBox then chatBox.say(tostring(item.label) ..        " = " ..       tostring(item.size)    )
-            
-end
-        if item and item.label and item.label:find(FLUID_LABEL) and item.size then
-            currentFluidCount = tonumber(item.size) or 0
-            break
-        end
+
+    if item
+    and item.label
+    and item.label:find(FLUID_LABEL)
+    and item.size then
+
+        currentFluidCount =
+            currentFluidCount +
+            (tonumber(item.size) or 0)
+
     end
+end
     
     return currentFluidCount
 end
