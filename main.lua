@@ -54,22 +54,22 @@ local buttons = {
     update = {
         x = 3,
         y = 8,
-        width = 17,
-        text = "[ ОБНОВИТЬ ]"
+        width = 10,
+        text = "[ ОБН ]"
     },
 
     restart = {
-        x = 22,
+        x = 14,
         y = 8,
-        width = 17,
-        text = "[ ПЕРЕЗАПУСК ]"
+        width = 11,
+        text = "[ РЕСТ ]"
     },
 
     exit = {
-        x = 41,
+        x = 26,
         y = 8,
-        width = 17,
-        text = "[ ВЫХОД ]"
+        width = 10,
+        text = "[ ВЫХ ]"
     }
 }
 
@@ -891,6 +891,8 @@ local meControllerAvailable = false
 local shutdownReactors    = {} -- Таблица для хранения адресов отключенных реакторов
 local reactorDepletionTime = {}
 local lastRodTick = computer.uptime()
+local lastRodRefresh = computer.uptime()
+
 
 function saveFileData(fileName, data)
     ensureDirectoryExists("/home/data")
@@ -1101,7 +1103,9 @@ local function getNuclearReactorsStats()
         local success9, depletionTime = pcall(function() return getReactorRodTime(r) end)
 
         depletionTime = success9 and depletionTime or 0
-        reactorDepletionTime[i] = depletionTime
+        if reactorDepletionTime[i] == nil then
+            reactorDepletionTime[i] = depletionTime
+        end
         
         gen = success2 and gen or 0
         mb = success3 and mb or 0
@@ -1323,6 +1327,14 @@ while true do
         end
     end
     lastRodTick = now
+        if now - lastRodRefresh >= 60 then
+
+    reactorDepletionTime = {}
+
+    lastRodRefresh = now
+
+end
+
 end
     
     local meData = getMEControllerStats()
