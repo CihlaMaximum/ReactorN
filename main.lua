@@ -36,7 +36,7 @@ end
 local frames = {
     energy = {x = 2, y = 2, width = 40, height = 8, title = "Энерго-сеть"},
     players = {x = 42, y = 2, width = 0, height = 8, title = "Игроки"},
-    reactors = {x = 2, y = 10, width = 0, height = 18, title = "Реакторы"},
+    reactors = {x = 2, y = 10, width = 0, height = 20, title = "Реакторы"},
     meProcesses = {x = 2, y = 28, width = 0, height = 12, title = "МЭ Процессы создания"},
 }
 
@@ -919,6 +919,7 @@ local function hasReactorChanged(newReactor, oldReactor)
            newReactor.temp ~= oldReactor.temp or
            newReactor.coolant ~= oldReactor.coolant or
            newReactor.type ~= oldReactor.type
+            newReactor.depletionTime ~= oldReactor.depletionTime
 end
 
 local function renderSingleReactor(reactor, x, y, reactorWidth, reactorHeight)
@@ -938,10 +939,11 @@ local function renderSingleReactor(reactor, x, y, reactorWidth, reactorHeight)
     gui.text(x, y + 2, "&fУровень: &e" .. string.format("%d", reactor.level))
     gui.text(x, y + 3, "&fЭнергия: &6" .. formatReactorEnergy(reactor.energyGen))
     gui.text(x, y + 4, "&fТемп:    " .. tempColor .. reactor.temp .. "°C")
+    gui.text(x, y + 5,"&e⏳ " ..secondsToHMS(reactor.depletionTime or 0)
     if reactor.type == "&bЖидкостный" then
-        gui.text(x, y + 5, "&fРасход:  &b" .. reactor.coolant .. " mB/s")
+        gui.text(x, y + 6, "&fРасход:  &b" .. reactor.coolant .. " mB/s")
     end
-    gui.text(x,y + 6,"&fСтержни: &e" ..secondsToHMS(reactor.depletionTime or 0)
+    
 )
 
 end
