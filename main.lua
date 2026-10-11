@@ -1141,7 +1141,7 @@ local function renderSingleReactor(reactor, x, y, reactorWidth, reactorHeight)
         gui.text(x, y + 6, "&fРасход:  &b" .. reactor.coolant .. " mB/s")
     end
     
-)
+
 
 end
 
