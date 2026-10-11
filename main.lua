@@ -7,6 +7,14 @@ local filesystem = require("filesystem")
 
 local gui = require("sgui")
 
+local shell = require("shell")
+
+local PROGRAM_PATH = "/home/main.lua"
+local BACKUP_PATH = "/home/main_backup.lua"
+
+local UPDATE_URL =
+    "https://raw.githubusercontent.com/CihlaMaximum/ReactorN/refs/heads/main/main.lua"
+
 local MEController = component.isAvailable("me_controller") and component.me_controller or nil
 local gpu = component.isAvailable("gpu") and component.gpu or nil
 local chatBox = component.isAvailable("chat_box") and component.chat_box or nil
@@ -41,6 +49,22 @@ local frames = {
 }
 
 local screenWidth, screenHeight = 120, 40
+
+local buttons = {
+    update = {
+        x = 3,
+        y = 8,
+        width = 17,
+        text = "[ ОБНОВИТЬ ]"
+    },
+
+    restart = {
+        x = 22,
+        y = 8,
+        width = 17,
+        text = "[ ПЕРЕЗАПУСК ]"
+    }
+}
 
 local function calculateFrameSizes()
     frames.players.width = screenWidth - frames.players.x
@@ -643,6 +667,179 @@ local function renderFluxNetwork(stats)
     gui.text(3, 7, "&aМаксимальный вход:&2 " .. energy(stats.maxInput)) -- убрал деление на 4
 end
 
+local function drawControlButtons()
+    gui.text(
+        buttons.update.x,
+        buttons.update.y,
+        "&0&2" .. buttons.update.text
+    )
+
+    gui.text(
+        buttons.restart.x,
+        buttons.restart.y,
+        "&0&6" .. buttons.restart.text
+    )
+end
+
+local function isInsideButton(x, y, button)
+    return x >= button.x and
+           x < button.x + button.width and
+           y == button.y
+end
+
+local function restartComputer()
+    term.clear()
+
+    print("Перезагрузка компьютера...")
+
+    computer.shutdown(true)
+end
+
+local function updateProgram()
+    term.clear()
+
+    print("Обновление программы...")
+    print("")
+    print("Источник:")
+    print(UPDATE_URL)
+    print("")
+
+    -- Удаляем предыдущую резервную копию
+    if filesystem.exists(BACKUP_PATH) then
+        filesystem.remove(BACKUP_PATH)
+    end
+
+    -- Создаём резервную копию рабочей версии
+    if filesystem.exists(PROGRAM_PATH) then
+        local backupSuccess, backupError =
+            filesystem.copy(PROGRAM_PATH, BACKUP_PATH)
+
+        if not backupSuccess then
+            print("Не удалось создать резервную копию:")
+            print(tostring(backupError))
+            print("")
+            print("Нажмите любую клавишу...")
+
+            event.pull("key_down")
+            term.clear()
+
+            return false
+        end
+    end
+
+    -- Скачиваем сначала во временный файл
+    local tempPath = "/home/main_download.lua"
+
+    if filesystem.exists(tempPath) then
+        filesystem.remove(tempPath)
+    end
+
+    local command =
+        "wget -fq " ..
+        UPDATE_URL ..
+        " " ..
+        tempPath
+
+    local downloadSuccess = shell.execute(command)
+
+    if not downloadSuccess or not filesystem.exists(tempPath) then
+        print("Ошибка загрузки новой версии.")
+        print("")
+        print("Рабочий main.lua не изменён.")
+        print("Резервная копия: " .. BACKUP_PATH)
+        print("")
+        print("Нажмите любую клавишу...")
+
+        event.pull("key_down")
+        term.clear()
+
+        return false
+    end
+
+    -- Проверяем, что файл не пустой
+    local downloadedFile = io.open(tempPath, "r")
+
+    if not downloadedFile then
+        print("Не удалось открыть загруженный файл.")
+        print("")
+        print("Нажмите любую клавишу...")
+
+        event.pull("key_down")
+        term.clear()
+
+        return false
+    end
+
+    local downloadedContent = downloadedFile:read("*a")
+    downloadedFile:close()
+
+    if not downloadedContent or #downloadedContent < 100 then
+        filesystem.remove(tempPath)
+
+        print("Загруженный файл пустой или слишком короткий.")
+        print("Обновление отменено.")
+        print("")
+        print("Нажмите любую клавишу...")
+
+        event.pull("key_down")
+        term.clear()
+
+        return false
+    end
+
+    -- Заменяем основной файл
+    if filesystem.exists(PROGRAM_PATH) then
+        filesystem.remove(PROGRAM_PATH)
+    end
+
+    local moveSuccess, moveError =
+        filesystem.rename(tempPath, PROGRAM_PATH)
+
+    if not moveSuccess then
+        print("Не удалось заменить main.lua:")
+        print(tostring(moveError))
+        print("")
+        print("Восстанавливаю резервную копию...")
+
+        if filesystem.exists(BACKUP_PATH) then
+            filesystem.copy(BACKUP_PATH, PROGRAM_PATH)
+        end
+
+        print("")
+        print("Нажмите любую клавишу...")
+
+        event.pull("key_down")
+        term.clear()
+
+        return false
+    end
+
+    print("Новая версия успешно загружена.")
+    print("Резервная копия:")
+    print(BACKUP_PATH)
+    print("")
+    print("Перезагрузка...")
+
+    computer.shutdown(true)
+
+    return true
+end
+
+local function handleTouch(screenAddress, x, y, button, player)
+    if isInsideButton(x, y, buttons.update) then
+        updateProgram()
+        return true
+    end
+
+    if isInsideButton(x, y, buttons.restart) then
+        restartComputer()
+        return true
+    end
+
+    return false
+end
+
+
 local REACTOR_FILE         = "/home/data/reactorInfo.txt"
 local REACTOR_UPDATE_INT   = 2
 local REACTOR_TEMP_WARN    = 950
@@ -939,7 +1136,7 @@ local function renderSingleReactor(reactor, x, y, reactorWidth, reactorHeight)
     gui.text(x, y + 2, "&fУровень: &e" .. string.format("%d", reactor.level))
     gui.text(x, y + 3, "&fЭнергия: &6" .. formatReactorEnergy(reactor.energyGen))
     gui.text(x, y + 4, "&fТемп:    " .. tempColor .. reactor.temp .. "°C")
-    gui.text(x, y + 5,"&e⏳ " ..secondsToHMS(reactor.depletionTime or 0))
+    gui.text(x, y + 5,"&eСтержни: " ..secondsToHMS(reactor.depletionTime or 0))
     if reactor.type == "&bЖидкостный" then
         gui.text(x, y + 6, "&fРасход:  &b" .. reactor.coolant .. " mB/s")
     end
@@ -1068,6 +1265,7 @@ if gpu then
     gui.drawFrame(frames.players.x, frames.players.y, frames.players.width, frames.players.height, frames.players.title, gui.colors["border"])
     gui.drawFrame(frames.reactors.x, frames.reactors.y, frames.reactors.width, frames.reactors.height, frames.reactors.title, gui.colors["border"])
     gui.drawFrame(frames.meProcesses.x, frames.meProcesses.y, frames.meProcesses.width, frames.meProcesses.height, frames.meProcesses.title, gui.colors["border"])
+    drawControlButtons()
 end
 
 if chatBox then
@@ -1077,14 +1275,32 @@ end
 while true do
     local meData = getMEControllerStats()
     local playersData_processed = processPlayersStatus()
-    
+
     renderMEController(meData)
     renderPlayersDisplay(playersData_processed)
     renderFluxNetwork(getFluxNetworkStats())
-    
+
+    drawControlButtons()
+
     updateReactors()
-    
+
     handleChatMessages(playersData_processed.changes)
-    
-    computer.pullSignal(0.1)
+
+    local eventData = {event.pull(0.1)}
+
+    if eventData[1] == "touch" then
+        local screenAddress = eventData[2]
+        local x = eventData[3]
+        local y = eventData[4]
+        local button = eventData[5]
+        local player = eventData[6]
+
+        handleTouch(
+            screenAddress,
+            x,
+            y,
+            button,
+            player
+        )
+    end
 end
