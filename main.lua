@@ -13,7 +13,7 @@ local PROGRAM_PATH = "/home/main.lua"
 local BACKUP_PATH = "/home/main_backup.lua"
 
 local UPDATE_URL =
-    "https://raw.githubusercontent.com/CihlaMaximum/ReactorN/main/main.lua"
+    "https://raw.githubusercontent.com/CihlaMaximum/ReactorN/refs/heads/main/main.lua"
 
 local MEController = component.isAvailable("me_controller") and component.me_controller or nil
 local gpu = component.isAvailable("gpu") and component.gpu or nil
