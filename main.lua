@@ -967,7 +967,10 @@ local function checkFluidInME()
     -- Ищем нужную жидкость по label
     currentFluidCount = 0
     for _, item in ipairs(items) do
-        if item and item.label and item.label == FLUID_LABEL and item.size then
+        if chatBox then chatBox.say(tostring(item.label) ..        " = " ..       tostring(item.size)    )
+            
+end
+        if item and item.label and item.label:find(FLUID_LABEL) and item.size then
             currentFluidCount = tonumber(item.size) or 0
             break
         end
