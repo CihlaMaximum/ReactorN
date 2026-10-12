@@ -3,6 +3,12 @@ local computer = require("computer")
 local config = require("config.config")
 local utils = require("lib.utils")
 
+local function setting(name, fallback)
+  local value = tonumber(config[name])
+  if value == nil then return fallback end
+  return value
+end
+
 local M = {
   last = -1e9,
   lastScan = -1e9,
@@ -16,7 +22,7 @@ local countFile = config.dataDir .. "/reactorInfo.txt"
 
 local function scan(force)
   local now = computer.uptime()
-  if not force and now - M.lastScan < config.reactorScanInterval then return M.entries end
+  if not force and now - M.lastScan < setting("reactorScanInterval", 30) then return M.entries end
   M.lastScan = now
   local out = {}
   for address, kind in component.list() do
@@ -48,7 +54,7 @@ end
 
 local function syncRods(entries, force)
   local now = computer.uptime()
-  if not force and now - M.lastRodRefresh < config.rodRefreshInterval then return end
+  if not force and now - M.lastRodRefresh < setting("rodRefreshInterval", 60) then return end
   M.lastRodRefresh = now
   for _, entry in ipairs(entries) do
     local real = realRodTime(entry.proxy)
@@ -63,7 +69,7 @@ local function applySafety(entries, data, fluidConfirmedLow)
     if d and d.liquid then
       local address = entry.address
       local working = d.activated == true
-      local lowBuffer = d.coolantCapacity > 0 and d.coolantRatio <= config.reactorCoolantStopRatio
+      local lowBuffer = d.coolantCapacity > 0 and d.coolantRatio <= setting("reactorCoolantStopRatio", 0.68)
 
       if fluidConfirmedLow and working then
         local ok = pcall(function() r.deactivate() end)
@@ -84,9 +90,9 @@ local function applySafety(entries, data, fluidConfirmedLow)
 
       local restored = not fluidConfirmedLow
         and d.coolantCapacity > 0
-        and d.coolantRatio >= config.reactorCoolantRestoreRatio
+        and d.coolantRatio >= setting("reactorCoolantRestoreRatio", 0.80)
 
-      if config.autoRestartReactors and restored
+      if config.autoRestartReactors ~= false and restored
         and (M.shutdownByME[address] or M.shutdownByCoolant[address]) then
         local ok = pcall(function() r.activate() end)
         if ok then
@@ -101,7 +107,7 @@ end
 
 function M.update(fluid, force, fluidConfirmedLow)
   local now = computer.uptime()
-  if not force and now - M.last < config.reactorInterval then return nil end
+  if not force and now - M.last < setting("reactorInterval", 1) then return nil end
   local delta = M.last < 0 and 0 or math.max(0, now - M.last)
   M.last = now
 
@@ -130,8 +136,8 @@ function M.update(fluid, force, fluidConfirmedLow)
     local capacity = liquid and select(1, safe(0, function() return r.getMaxFluidCoolant() end)) or 0
     local ratio = capacity > 0 and stored / capacity or 1
     local rod = M.rodCache[entry.address] or 0
-    local rodColor = rod < config.rodCriticalSeconds and "&c"
-      or (rod < config.rodWarningSeconds and "&e" or "&a")
+    local rodColor = rod < setting("rodCriticalSeconds", 21600) and "&c"
+      or (rod < setting("rodWarningSeconds", 86400) and "&e" or "&a")
 
     result.reactors[i] = {
       id = i, address = entry.address, online = active, activated = active,
@@ -149,7 +155,7 @@ function M.update(fluid, force, fluidConfirmedLow)
   applySafety(entries, result.reactors, fluidConfirmedLow == true)
   local storedCount = utils.readNumber(countFile, 0)
   if storedCount == 0 or result.count > storedCount then
-    storedCount = math.max(result.count, config.expectedReactors)
+    storedCount = math.max(result.count, setting("expectedReactors", 6))
     utils.write(countFile, storedCount)
   end
   result.missing = math.max(0, storedCount - result.count)

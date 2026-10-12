@@ -46,7 +46,7 @@ while true do
   if playerData then gui.drawPlayers(playerData); chat.notifyChanges(changes) end
   gui.drawButtons()
 
-  local e = {event.pull(config.tickInterval)}
+  local e = {event.pull(tonumber(config.tickInterval) or 0.1)}
   if e[1] == "touch" then
     local action = gui.hitButton(e[3], e[4])
     if action == "restart" then

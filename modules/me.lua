@@ -2,6 +2,12 @@ local component = require("component")
 local computer = require("computer")
 local config = require("config.config")
 
+local function setting(name, fallback)
+  local value = tonumber(config[name])
+  if value == nil then return fallback end
+  return value
+end
+
 local M = {
   last = -1e9,
   fluid = 0,
@@ -53,7 +59,7 @@ local function readFluid(controller)
       if nameOK and labelOK then total = total + (tonumber(item.size) or 0) end
     end
   end
-  if total > config.fluidMaxValidValue then
+  if total > setting("fluidMaxValidValue", 1000000000000) then
     return nil, false, "ME value above safety maximum"
   end
   return total, true, nil
@@ -68,7 +74,7 @@ local function processFluid(value, valid)
     return
   end
 
-  if value >= config.minFluidDrop then
+  if value >= setting("minFluidDrop", 1000000) then
     M.fluid = value
     M.lastValidFluid = value
     M.lowReadCounter = 0
@@ -77,7 +83,7 @@ local function processFluid(value, valid)
   end
 
   M.lowReadCounter = M.lowReadCounter + 1
-  if M.lowReadCounter < config.fluidLowConfirmations then
+  if M.lowReadCounter < setting("fluidLowConfirmations", 5) then
     M.fluid = M.lastValidFluid
     M.fluidConfirmedLow = false
   else
@@ -88,7 +94,7 @@ end
 
 function M.update(force)
   local now = computer.uptime()
-  if not force and now - M.last < config.meInterval then return nil end
+  if not force and now - M.last < setting("meInterval", 5) then return nil end
   M.last = now
   local controller = getController()
   M.cpu = readCPUs(controller)
@@ -99,7 +105,7 @@ function M.update(force)
     rawFluid = M.rawFluid,
     lastValidFluid = M.lastValidFluid,
     lowReadCounter = M.lowReadCounter,
-    lowReadLimit = config.fluidLowConfirmations,
+    lowReadLimit = setting("fluidLowConfirmations", 5),
     readingValid = M.readingValid,
     fluidConfirmedLow = M.fluidConfirmedLow,
     error = err,
