@@ -1333,33 +1333,32 @@ if chatBox then
 end
 
 while true do
-        
     local now = computer.uptime()
-if now - lastRodTick >= 1 then
-    for i = 1, #reactorDepletionTime do
-        if reactorDepletionTime[i]
-        and reactorDepletionTime[i] > 0 then
 
-            reactorDepletionTime[i] =
-                reactorDepletionTime[i] - 1
+    if now - lastRodTick >= 1 then
+        for i = 1, #reactorDepletionTime do
+            if reactorDepletionTime[i]
+            and reactorDepletionTime[i] > 0 then
+                reactorDepletionTime[i] =
+                    reactorDepletionTime[i] - 1
+            end
         end
+
+        lastRodTick = now
+
+        local meData = getMEControllerStats()
+        local playersData_processed = processPlayersStatus()
+
+        renderMEController(meData)
+        renderPlayersDisplay(playersData_processed)
+        renderFluxNetwork(getFluxNetworkStats())
+
+        drawControlButtons()
+
+        updateReactors()
+
+        handleChatMessages(playersData_processed.changes)
     end
-    lastRodTick = now
-    
-    local meData = getMEControllerStats()
-    local playersData_processed = processPlayersStatus()
-
-    renderMEController(meData)
-    renderPlayersDisplay(playersData_processed)
-    renderFluxNetwork(getFluxNetworkStats())
-
-    drawControlButtons()
-
-    lastReactorData = {}
-    
-    updateReactors()
-
-    handleChatMessages(playersData_processed.changes)
 
     local eventData = {event.pull(0.1)}
 
@@ -1378,5 +1377,4 @@ if now - lastRodTick >= 1 then
             player
         )
     end
-end
 end
