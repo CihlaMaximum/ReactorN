@@ -9,6 +9,8 @@ local reactors = require("modules.reactors")
 local players = require("modules.players")
 local chat = require("modules.chat")
 local updater = require("modules.updater")
+local coolantMonitor = require("modules.coolant_monitor")
+local notifications = require("modules.notifications")
 
 local ok, err = gui.init()
 if not ok then print(err); return end
@@ -28,7 +30,12 @@ while true do
     me.isFluidConfirmedLow()
   )
   if reactorData then
+    reactorData.coolantForecastSeconds = coolantMonitor.update(
+      reactorData.fluidCount,
+      reactorData.totalCoolant
+    )
     gui.drawReactors(reactorData)
+    notifications.update(reactorData, reactorData.coolantForecastSeconds)
     if reactorData.missing > 0 and reactorData.missing ~= lastMissing then
       chat.notifyMissing(reactorData.missing, reactorData.count, reactorData.count + reactorData.missing)
     end
