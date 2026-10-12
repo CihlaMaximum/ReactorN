@@ -1,50 +1,43 @@
 local computer = require("computer")
+local config = require("config.config")
 
 local M = {
   history = {},
   forecastSeconds = nil,
-  lastFluid = 0,
-  lastConsumption = 0,
   lastHistoryUpdate = -1000000000
 }
 
-local HISTORY_SIZE = 300
-local MIN_CONSUMPTION = 1
-local HISTORY_INTERVAL = 5
+local function setting(name, fallback)
+  local value = tonumber(config[name])
+  if value == nil then return fallback end
+  return value
+end
 
 function M.update(fluid, consumption)
-  local fluidNumber = tonumber(fluid)
-  local consumptionNumber = tonumber(consumption)
+  local fluidNumber = tonumber(fluid) or 0
+  local consumptionNumber = tonumber(consumption) or 0
+  if fluidNumber < 0 then fluidNumber = 0 end
+  if consumptionNumber < 0 then consumptionNumber = 0 end
 
-  if fluidNumber == nil or fluidNumber < 0 then
-    fluidNumber = 0
-  end
-
-  if consumptionNumber == nil or consumptionNumber < 0 then
-    consumptionNumber = 0
-  end
-
-  M.lastFluid = fluidNumber
-  M.lastConsumption = consumptionNumber
-
+  local historySize = math.max(1, math.floor(setting("coolantHistorySize", 300)))
+  local minConsumption = math.max(0, setting("coolantForecastMinConsumption", 1))
+  local historyInterval = math.max(1, setting("meInterval", 5))
+  local shutdownLimit = math.max(0, setting("minFluidDrop", 1000000))
   local now = tonumber(computer.uptime()) or 0
-  local lastUpdate = tonumber(M.lastHistoryUpdate) or -1000000000
 
-  if now - lastUpdate >= HISTORY_INTERVAL then
+  if now - (tonumber(M.lastHistoryUpdate) or -1000000000) >= historyInterval then
     M.lastHistoryUpdate = now
     M.history[#M.history + 1] = {
       time = now,
       fluid = fluidNumber,
       consumption = consumptionNumber
     }
-
-    while #M.history > HISTORY_SIZE do
-      table.remove(M.history, 1)
-    end
+    while #M.history > historySize do table.remove(M.history, 1) end
   end
 
-  if consumptionNumber > 0 and consumptionNumber >= MIN_CONSUMPTION then
-    M.forecastSeconds = math.floor(fluidNumber / consumptionNumber)
+  local usableFluid = math.max(0, fluidNumber - shutdownLimit)
+  if consumptionNumber >= minConsumption and consumptionNumber > 0 then
+    M.forecastSeconds = math.floor(usableFluid / consumptionNumber)
   else
     M.forecastSeconds = nil
   end
@@ -52,22 +45,6 @@ function M.update(fluid, consumption)
   return M.forecastSeconds
 end
 
-function M.getForecastSeconds()
-  return M.forecastSeconds
-end
-
-function M.getHistory()
-  return M.history
-end
-
-function M.getTrend()
-  if #M.history < 2 then
-    return 0
-  end
-
-  local newest = tonumber(M.history[#M.history].fluid) or 0
-  local oldest = tonumber(M.history[1].fluid) or 0
-  return newest - oldest
-end
-
+function M.getForecastSeconds() return M.forecastSeconds end
+function M.getHistory() return M.history end
 return M
