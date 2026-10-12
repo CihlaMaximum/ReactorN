@@ -66,7 +66,7 @@ local buttons = {
     },
 
     exit = {
-        x = 25,
+        x = 26,
         y = 8,
         width = 10,
         text = "[ ВЫХ ]"
