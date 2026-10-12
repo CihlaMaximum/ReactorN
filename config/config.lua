@@ -4,7 +4,7 @@ return {
   rodRefreshInterval=60, rodHardSyncDifference=120,
   meInterval=5, playerInterval=1,
   reactorTempWarn=950, expectedReactors=6,
-  minFluidDrop=1500000,
+  minFluidDrop=1300000,
   fluidItemName="ae2fc:fluid_drop",
   fluidLabel="fluid.low_temperature_refrigerant",
   fluidLowConfirmations = 5,
