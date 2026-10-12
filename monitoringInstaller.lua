@@ -16,8 +16,8 @@ local files = {
         path = "/config/config.lua"
     },
     {
-        url = "https://raw.githubusercontent.com/CihlaMaximum/ReactorN/refs/heads/main/libs/utils.lua",
-        path = "/libs/utils.lua"
+        url = "https://raw.githubusercontent.com/CihlaMaximum/ReactorN/refs/heads/main/lib/utils.lua",
+        path = "/lib/utils.lua"
     },
     {
         url = "https://raw.githubusercontent.com/CihlaMaximum/ReactorN/refs/heads/main/modules/chat.lua",
