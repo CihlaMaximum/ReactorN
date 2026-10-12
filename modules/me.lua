@@ -76,10 +76,8 @@ end
 if total <= 0 then
   return nil, false, "No fluid found"
 end
-print(
-  "TOTAL=" .. tostring(total)
-  .. " ITEMS=" .. tostring(#items)
-)
+
+print("TOTAL=" .. tostring(total) .. " ITEMS=" .. tostring(#items))
 
   
 return total, true, nil
