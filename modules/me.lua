@@ -2,215 +2,114 @@ local component = require("component")
 local computer = require("computer")
 local config = require("config.config")
 
-local me = {
-    lastUpdate = -1000000,
-
-    fluid = 0,
-    lastValidFluid = 0,
-
-    lowReadCounter = 0,
-
-    readingValid = false,
-    fluidConfirmedLow = false,
-
-    cpu = {
-        processors = {},
-        idle = 0,
-        busy = 0,
-        total = 0
-    }
+local M = {
+  last = -1e9,
+  fluid = 0,
+  rawFluid = nil,
+  lastValidFluid = 0,
+  lowReadCounter = 0,
+  readingValid = false,
+  fluidConfirmedLow = false,
+  cpu = {processors = {}, idle = 0, busy = 0, total = 0}
 }
 
 local function getController()
-    if component.isAvailable("me_controller") then
-        return component.me_controller
-    end
-
-    if component.isAvailable("me_interface") then
-        return component.me_interface
-    end
-
-    return nil
+  if component.isAvailable("me_controller") then return component.me_controller end
+  if component.isAvailable("me_interface") then return component.me_interface end
+  return nil
 end
 
-local function getCPUData(controller)
-    local data = {
-        processors = {},
-        idle = 0,
-        busy = 0,
-        total = 0
-    }
-
-    if not controller or not controller.getCpus then
-        return data
-    end
-
-    local success, cpus = pcall(function()
-        return controller.getCpus()
-    end)
-
-    if not success or type(cpus) ~= "table" then
-        return data
-    end
-
-    data.total = #cpus
-
-    for i, cpu in ipairs(cpus) do
-        local busy = cpu.busy == true
-
-        data.processors[i] = {
-            busy = busy
-        }
-
-        if busy then
-            data.busy = data.busy + 1
-        else
-            data.idle = data.idle + 1
-        end
-    end
-
-    return data
+local function readCPUs(controller)
+  local data = {processors = {}, idle = 0, busy = 0, total = 0}
+  if not controller or not controller.getCpus then return data end
+  local ok, cpus = pcall(function() return controller.getCpus() end)
+  if not ok or type(cpus) ~= "table" then return data end
+  data.total = #cpus
+  for i, cpu in ipairs(cpus) do
+    local busy = cpu.busy == true
+    data.processors[i] = {busy = busy}
+    if busy then data.busy = data.busy + 1 else data.idle = data.idle + 1 end
+  end
+  return data
 end
 
 local function readFluid(controller)
-    if not controller or not controller.getItemsInNetwork then
-        return nil, false, "ME контроллер недоступен"
+  if not controller or not controller.getItemsInNetwork then
+    return nil, false, "ME controller unavailable"
+  end
+  local ok, items = pcall(function()
+    return controller.getItemsInNetwork({name = config.fluidItemName})
+  end)
+  if not ok or type(items) ~= "table" then
+    return nil, false, "ME query failed"
+  end
+  local total = 0
+  for _, item in ipairs(items) do
+    if item and item.size then
+      local name = tostring(item.name or "")
+      local label = tostring(item.label or "")
+      local nameOK = name == "" or name == config.fluidItemName
+      local labelOK = label == "" or label:find(config.fluidLabel, 1, true) ~= nil
+      if nameOK and labelOK then total = total + (tonumber(item.size) or 0) end
     end
-
-    local success, items = pcall(function()
-        return controller.getItemsInNetwork({
-            name = config.fluidItemName
-        })
-    end)
-
-    if not success then
-        return nil, false, "Ошибка запроса ME"
-    end
-
-    if type(items) ~= "table" then
-        return nil, false, "ME вернула неправильные данные"
-    end
-
-    local total = 0
-
-    for _, item in ipairs(items) do
-        if item and item.size then
-            local label = tostring(item.label or "")
-            local name = tostring(item.name or "")
-
-            local correctName =
-                name == config.fluidItemName
-                or name == ""
-
-            local correctLabel =
-                label == ""
-                or label:find(
-                    config.fluidLabel,
-                    1,
-                    true
-                ) ~= nil
-
-            if correctName and correctLabel then
-                total = total + (tonumber(item.size) or 0)
-            end
-        end
-    end
-
-    if total > config.fluidMaxValidValue then
-        return nil, false, "ME вернула слишком большое значение"
-    end
-
-    return total, true, nil
+  end
+  if total > config.fluidMaxValidValue then
+    return nil, false, "ME value above safety maximum"
+  end
+  return total, true, nil
 end
 
-local function processFluidReading(value, valid)
-    me.readingValid = valid
+local function processFluid(value, valid)
+  M.readingValid = valid
+  M.rawFluid = value
 
-    -- Ошибка запроса: сохраняем последнее нормальное значение.
-    -- Ошибка связи не считается реальным отсутствием жидкости.
-    if not valid or value == nil then
-        me.fluid = me.lastValidFluid
-        return
-    end
+  if not valid or value == nil then
+    M.fluid = M.lastValidFluid
+    return
+  end
 
-    -- Значение выше или равно лимиту является нормальным.
-    if value >= config.minFluidDrop then
-        me.fluid = value
-        me.lastValidFluid = value
+  if value >= config.minFluidDrop then
+    M.fluid = value
+    M.lastValidFluid = value
+    M.lowReadCounter = 0
+    M.fluidConfirmedLow = false
+    return
+  end
 
-        me.lowReadCounter = 0
-        me.fluidConfirmedLow = false
-
-        return
-    end
-
-    -- Получено значение ниже лимита.
-    me.lowReadCounter = me.lowReadCounter + 1
-
-    -- Пока недостаток не подтверждён,
-    -- оставляем на экране последнее нормальное значение.
-    if me.lowReadCounter < config.fluidLowConfirmations then
-        me.fluid = me.lastValidFluid
-        me.fluidConfirmedLow = false
-        return
-    end
-
-    -- Низкое значение повторилось необходимое количество раз.
-    me.fluid = value
-    me.fluidConfirmedLow = true
+  M.lowReadCounter = M.lowReadCounter + 1
+  if M.lowReadCounter < config.fluidLowConfirmations then
+    M.fluid = M.lastValidFluid
+    M.fluidConfirmedLow = false
+  else
+    M.fluid = value
+    M.fluidConfirmedLow = true
+  end
 end
 
-function me.update(force)
-    local now = computer.uptime()
-
-    if not force
-        and now - me.lastUpdate < config.meInterval then
-        return nil
-    end
-
-    me.lastUpdate = now
-
-    local controller = getController()
-
-    me.cpu = getCPUData(controller)
-
-    local fluidValue, valid, errorMessage =
-        readFluid(controller)
-
-    processFluidReading(fluidValue, valid)
-
-    return {
-        fluid = me.fluid,
-        rawFluid = fluidValue,
-
-        lastValidFluid = me.lastValidFluid,
-
-        lowReadCounter = me.lowReadCounter,
-        lowReadLimit = config.fluidLowConfirmations,
-
-        readingValid = me.readingValid,
-        fluidConfirmedLow = me.fluidConfirmedLow,
-
-        error = errorMessage,
-        cpu = me.cpu,
-        available = controller ~= nil
-    }
+function M.update(force)
+  local now = computer.uptime()
+  if not force and now - M.last < config.meInterval then return nil end
+  M.last = now
+  local controller = getController()
+  M.cpu = readCPUs(controller)
+  local value, valid, err = readFluid(controller)
+  processFluid(value, valid)
+  return {
+    fluid = M.fluid,
+    rawFluid = M.rawFluid,
+    lastValidFluid = M.lastValidFluid,
+    lowReadCounter = M.lowReadCounter,
+    lowReadLimit = config.fluidLowConfirmations,
+    readingValid = M.readingValid,
+    fluidConfirmedLow = M.fluidConfirmedLow,
+    error = err,
+    cpu = M.cpu,
+    available = controller ~= nil
+  }
 end
 
-function me.getFluid()
-    return me.fluid
-end
-
-function me.isFluidConfirmedLow()
-    return me.fluidConfirmedLow
-end
-
-function me.getLowReadCounter()
-    return me.lowReadCounter
-end
-
-function me.getCPU()
-    return me.cpu
-end
-
-return me
+function M.getFluid() return M.fluid end
+function M.getCPU() return M.cpu end
+function M.isFluidConfirmedLow() return M.fluidConfirmedLow end
+function M.getLowReadCounter() return M.lowReadCounter end
+return M
