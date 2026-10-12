@@ -39,9 +39,67 @@ function M.drawPlayers(list)
   for i,p in ipairs(list or {}) do local c=(i-1)%cols; local r=math.floor((i-1)/cols); if r<5 then text(f.x+1+c*w,f.y+2+r,(p.online and "&2" or "&4")..p.name) end end
 end
 function M.drawME(d)
-  local f=F.me; for y=0,6 do clear(f.x+1,f.y+1+y,f.w-2) end
-  for i,cpu in ipairs(d.processors or {}) do local c=(i-1)%5; local r=math.floor((i-1)/5); if r<5 then text(f.x+1+c*22,f.y+2+r,"&fCPU #"..i..": "..(cpu.busy and "&cВ работе" or "&aСвободен")) end end
-  text(f.x+1,f.y+7,"&a"..d.idle.." &f/ &c"..d.busy.."   &9Всего: &a"..d.total)
+
+  local f = F.me
+
+  for y = 0, 6 do
+    clear(f.x + 1, f.y + 1 + y, f.w - 2)
+  end
+
+  local busyList = {}
+
+  for i, cpu in ipairs(d.processors or {}) do
+    if cpu.busy then
+      table.insert(busyList, i)
+    end
+  end
+
+  text(
+    f.x + 2,
+    f.y + 2,
+    "&fCPU занято: &c" ..
+    tostring(d.busy) ..
+    "&f / &a" ..
+    tostring(d.total)
+  )
+
+  text(
+    f.x + 2,
+    f.y + 3,
+    "&fСвободно: &a" ..
+    tostring(d.idle)
+  )
+
+  if #busyList == 0 then
+
+    text(
+      f.x + 2,
+      f.y + 5,
+      "&aВсе CPU свободны"
+    )
+
+  else
+
+    local cpuText = ""
+
+    for _, cpuId in ipairs(busyList) do
+
+      if cpuText ~= "" then
+        cpuText = cpuText .. ", "
+      end
+
+      cpuText = cpuText .. "#" .. cpuId
+
+    end
+
+    text(
+      f.x + 2,
+      f.y + 5,
+      "&cАктивные CPU: " .. cpuText
+    )
+
+  end
+
 end
 function M.drawReactors(s)
   local f=F.reactors
