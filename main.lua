@@ -938,7 +938,7 @@ local function checkFluidInME()
     
     lastMECheck = currentTime
    
-end
+
     
     -- Проверяем доступность ME контроллера
     if not component.isAvailable("me_controller") then
