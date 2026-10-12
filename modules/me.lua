@@ -53,42 +53,31 @@ local function readFluid(controller)
   if not ok or type(items) ~= "table" then
     return nil, false, "ME query failed"
   end
-if #items == 0 then
-  return nil, false, "No fluid items returned"
-end
-  
+
+  if #items == 0 then
+    return nil, false, "No fluid items returned"
+  end
+
   local total = 0
 
-for _, item in ipairs(items) do
-  if item and item.size then
-    local name = tostring(item.name or "")
-    local label = tostring(item.label or "")
+  for _, item in ipairs(items) do
+    if item and item.size then
+      local name = tostring(item.name or "")
+      local label = tostring(item.label or "")
 
-    if name == config.fluidItemName
-    and label == config.fluidLabel then
-
-      total = total + (tonumber(item.size) or 0)
-    end
-  end
-end
-
--- если ничего не нашли, считаем чтение ошибочным
-if total <= 0 then
-  return nil, false, "No fluid found"
-end
-
-print("TOTAL=" .. tostring(total) .. " ITEMS=" .. tostring(#items))
-
-  
-return total, true, nil
+      if name == config.fluidItemName
+      and label == config.fluidLabel then
+        total = total + (tonumber(item.size) or 0)
+      end
     end
   end
 
-  -- Если AE временно вернул пустой список,
-  -- не считаем это реальным нулем
-  if not found then
-    return nil, false, "Fluid item not found"
+  if total <= 0 then
+    return nil, false, "No fluid found"
   end
+
+  print("TOTAL=" .. tostring(total) ..
+        " ITEMS=" .. tostring(#items))
 
   if total > setting(
       "fluidMaxValidValue",
