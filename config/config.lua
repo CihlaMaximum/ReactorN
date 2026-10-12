@@ -7,6 +7,7 @@ return {
   minFluidDrop=1500000,
   fluidItemName="ae2fc:fluid_drop",
   fluidLabel="fluid.low_temperature_refrigerant",
+  fluidLowConfirmations = 5,
   rodWarningSeconds=86400, rodCriticalSeconds=21600,
   dataDir="/home/data", programPath="/home/main.lua",
   backupPath="/home/main_backup.lua",
