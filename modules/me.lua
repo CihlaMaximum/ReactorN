@@ -1,17 +1,216 @@
-local component=require("component")
-local computer=require("computer")
-local config=require("config.config")
-local M={last=-1e9,fluid=0,cpu={processors={},idle=0,busy=0,total=0}}
-function M.update(force)
- local now=computer.uptime(); if not force and now-M.last<config.meInterval then return nil end; M.last=now
- if not component.isAvailable("me_controller") then M.fluid=0; return {fluid=0,cpu=M.cpu,available=false} end
- local c=component.me_controller
- local ok,cpus=pcall(function() return c.getCpus() end); cpus=ok and cpus or {}; local data={processors={},idle=0,busy=0,total=#cpus}
- for i,cpu in ipairs(cpus) do data.processors[i]={busy=cpu.busy==true}; if cpu.busy then data.busy=data.busy+1 else data.idle=data.idle+1 end end
- local ok2,items=pcall(function() return c.getItemsInNetwork({name=config.fluidItemName}) end); local total=0
- if ok2 and type(items)=="table" then for _,item in ipairs(items) do if item and item.size and (not item.label or item.label:find(config.fluidLabel,1,true)) then total=total+(tonumber(item.size) or 0) end end end
- M.fluid=total; M.cpu=data; return {fluid=total,cpu=data,available=true}
+local component = require("component")
+local computer = require("computer")
+local config = require("config.config")
+
+local me = {
+    lastUpdate = -1000000,
+
+    fluid = 0,
+    lastValidFluid = 0,
+
+    lowReadCounter = 0,
+
+    readingValid = false,
+    fluidConfirmedLow = false,
+
+    cpu = {
+        processors = {},
+        idle = 0,
+        busy = 0,
+        total = 0
+    }
+}
+
+local function getController()
+    if component.isAvailable("me_controller") then
+        return component.me_controller
+    end
+
+    if component.isAvailable("me_interface") then
+        return component.me_interface
+    end
+
+    return nil
 end
-function M.getFluid() return M.fluid end
-function M.getCPU() return M.cpu end
-return M
+
+local function getCPUData(controller)
+    local data = {
+        processors = {},
+        idle = 0,
+        busy = 0,
+        total = 0
+    }
+
+    if not controller or not controller.getCpus then
+        return data
+    end
+
+    local success, cpus = pcall(function()
+        return controller.getCpus()
+    end)
+
+    if not success or type(cpus) ~= "table" then
+        return data
+    end
+
+    data.total = #cpus
+
+    for i, cpu in ipairs(cpus) do
+        local busy = cpu.busy == true
+
+        data.processors[i] = {
+            busy = busy
+        }
+
+        if busy then
+            data.busy = data.busy + 1
+        else
+            data.idle = data.idle + 1
+        end
+    end
+
+    return data
+end
+
+local function readFluid(controller)
+    if not controller or not controller.getItemsInNetwork then
+        return nil, false, "ME контроллер недоступен"
+    end
+
+    local success, items = pcall(function()
+        return controller.getItemsInNetwork({
+            name = config.fluidItemName
+        })
+    end)
+
+    if not success then
+        return nil, false, "Ошибка запроса ME"
+    end
+
+    if type(items) ~= "table" then
+        return nil, false, "ME вернула неправильные данные"
+    end
+
+    local total = 0
+
+    for _, item in ipairs(items) do
+        if item and item.size then
+            local label = tostring(item.label or "")
+            local name = tostring(item.name or "")
+
+            local correctName =
+                name == config.fluidItemName
+                or name == ""
+
+            local correctLabel =
+                label == ""
+                or label:find(
+                    config.fluidLabel,
+                    1,
+                    true
+                ) ~= nil
+
+            if correctName and correctLabel then
+                total = total + (tonumber(item.size) or 0)
+            end
+        end
+    end
+
+    if total > config.fluidMaxValidValue then
+        return nil, false, "ME вернула слишком большое значение"
+    end
+
+    return total, true, nil
+end
+
+local function processFluidReading(value, valid)
+    me.readingValid = valid
+
+    -- Ошибка запроса: сохраняем последнее нормальное значение.
+    -- Ошибка связи не считается реальным отсутствием жидкости.
+    if not valid or value == nil then
+        me.fluid = me.lastValidFluid
+        return
+    end
+
+    -- Значение выше или равно лимиту является нормальным.
+    if value >= config.minFluidDrop then
+        me.fluid = value
+        me.lastValidFluid = value
+
+        me.lowReadCounter = 0
+        me.fluidConfirmedLow = false
+
+        return
+    end
+
+    -- Получено значение ниже лимита.
+    me.lowReadCounter = me.lowReadCounter + 1
+
+    -- Пока недостаток не подтверждён,
+    -- оставляем на экране последнее нормальное значение.
+    if me.lowReadCounter < config.fluidLowConfirmations then
+        me.fluid = me.lastValidFluid
+        me.fluidConfirmedLow = false
+        return
+    end
+
+    -- Низкое значение повторилось необходимое количество раз.
+    me.fluid = value
+    me.fluidConfirmedLow = true
+end
+
+function me.update(force)
+    local now = computer.uptime()
+
+    if not force
+        and now - me.lastUpdate < config.meInterval then
+        return nil
+    end
+
+    me.lastUpdate = now
+
+    local controller = getController()
+
+    me.cpu = getCPUData(controller)
+
+    local fluidValue, valid, errorMessage =
+        readFluid(controller)
+
+    processFluidReading(fluidValue, valid)
+
+    return {
+        fluid = me.fluid,
+        rawFluid = fluidValue,
+
+        lastValidFluid = me.lastValidFluid,
+
+        lowReadCounter = me.lowReadCounter,
+        lowReadLimit = config.fluidLowConfirmations,
+
+        readingValid = me.readingValid,
+        fluidConfirmedLow = me.fluidConfirmedLow,
+
+        error = errorMessage,
+        cpu = me.cpu,
+        available = controller ~= nil
+    }
+end
+
+function me.getFluid()
+    return me.fluid
+end
+
+function me.isFluidConfirmedLow()
+    return me.fluidConfirmedLow
+end
+
+function me.getLowReadCounter()
+    return me.lowReadCounter
+end
+
+function me.getCPU()
+    return me.cpu
+end
+
+return me
