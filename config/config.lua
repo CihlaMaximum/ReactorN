@@ -14,7 +14,7 @@ return {
   reactorTempWarn = 950,
   expectedReactors = 6,
 
-  minFluidDrop = 1300000,
+  minFluidDrop = 1000000,
   fluidItemName = "ae2fc:fluid_drop",
   fluidLabel = "low_temperature_refrigerant",
   fluidLowConfirmations = 5,
@@ -31,5 +31,22 @@ return {
   githubBase = "https://raw.githubusercontent.com/CihlaMaximum/ReactorN/refs/heads/main/",
   debugUser = "Delly",
   tableTitle = "Мониторинг",
-  chatTitle = "Оператор"
+  chatTitle = "Оператор",
+
+  -- История и прогноз хладагента
+  coolantHistorySize = 300,
+  coolantForecastMinConsumption = 1,
+
+  -- Пороговые уведомления по прогнозу хладагента, секунды
+  coolantNotify12h = 43200,
+  coolantNotify3h = 10800,
+  coolantNotify1h = 3600,
+  coolantCriticalRepeat = 600,
+
+  -- Пороговые уведомления по стержням, секунды
+  rodNotify12h = 43200,
+  rodNotify6h = 21600,
+  rodNotify3h = 10800,
+  rodNotify1h = 3600,
+  rodCriticalRepeat = 600
 }
