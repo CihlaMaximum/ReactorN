@@ -58,24 +58,31 @@ if #items == 0 then
 end
   
   local total = 0
-  local found = false
 
-  for _, item in ipairs(items) do
-    if item and item.size then
+for _, item in ipairs(items) do
+  if item and item.size then
+    local name = tostring(item.name or "")
+    local label = tostring(item.label or "")
 
-      local name = tostring(item.name or "")
+    if name == config.fluidItemName
+    and label == config.fluidLabel then
 
-      -- Временно можно раскомментировать
-       --print(
-       --  "NAME=" .. tostring(item.name)
-       --  .. " LABEL=" .. tostring(item.label)
-      --   .. " SIZE=" .. tostring(item.size)
-     --  )
+      total = total + (tonumber(item.size) or 0)
+    end
+  end
+end
 
-      if name == config.fluidItemName then
-        total = total + (tonumber(item.size) or 0)
-        found = true
-      end
+-- если ничего не нашли, считаем чтение ошибочным
+if total <= 0 then
+  return nil, false, "No fluid found"
+end
+print(
+  "TOTAL=" .. tostring(total)
+  .. " ITEMS=" .. tostring(#items)
+)
+`
+  
+return total, true, nil
     end
   end
 
