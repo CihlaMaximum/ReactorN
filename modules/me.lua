@@ -43,25 +43,53 @@ local function readFluid(controller)
   if not controller or not controller.getItemsInNetwork then
     return nil, false, "ME controller unavailable"
   end
+
   local ok, items = pcall(function()
-    return controller.getItemsInNetwork({name = config.fluidItemName})
+    return controller.getItemsInNetwork({
+      name = config.fluidItemName
+    })
   end)
+
   if not ok or type(items) ~= "table" then
     return nil, false, "ME query failed"
   end
+
   local total = 0
+  local found = false
+
   for _, item in ipairs(items) do
     if item and item.size then
+
       local name = tostring(item.name or "")
-      local label = tostring(item.label or "")
-      local nameOK = name == "" or name == config.fluidItemName
-      local labelOK = label == "" or label:find(config.fluidLabel, 1, true) ~= nil
-      if nameOK and labelOK then total = total + (tonumber(item.size) or 0) end
+
+      -- Временно можно раскомментировать
+       print(
+         "NAME=" .. tostring(item.name)
+         .. " LABEL=" .. tostring(item.label)
+         .. " SIZE=" .. tostring(item.size)
+       )
+
+      if name == config.fluidItemName then
+        total = total + (tonumber(item.size) or 0)
+        found = true
+      end
     end
   end
-  if total > setting("fluidMaxValidValue", 1000000000000) then
-    return nil, false, "ME value above safety maximum"
+
+  -- Если AE временно вернул пустой список,
+  -- не считаем это реальным нулем
+  if not found then
+    return nil, false, "Fluid item not found"
   end
+
+  if total > setting(
+      "fluidMaxValidValue",
+      1000000000000
+     ) then
+    return nil, false,
+      "ME value above safety maximum"
+  end
+
   return total, true, nil
 end
 
