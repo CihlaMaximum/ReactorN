@@ -12,13 +12,42 @@ local files = {
         path = "/home/main.lua"
     },
     {
-        url = "https://raw.githubusercontent.com/CihlaMaximum/ReactorN/refs/heads/main/lib/sgui.lua",
-        path = "/lib/sgui.lua"
+        url = "https://raw.githubusercontent.com/CihlaMaximum/ReactorN/refs/heads/main/config/config.lua",
+        path = "/config/config.lua"
     },
     {
-        url = "https://raw.githubusercontent.com/CihlaMaximum/ReactorN/refs/heads/main/tools/admin.lua",
-        path = "/home/admin.lua"
+        url = "https://raw.githubusercontent.com/CihlaMaximum/ReactorN/refs/heads/main/libs/utils.lua",
+        path = "/libs/utils.lua"
+    },
+    {
+        url = "https://raw.githubusercontent.com/CihlaMaximum/ReactorN/refs/heads/main/modules/chat.lua",
+        path = "/modules/chat.lua"
+    },
+    {
+        url = "https://raw.githubusercontent.com/CihlaMaximum/ReactorN/refs/heads/main/modules/flux.lua",
+        path = "/modules/flux.lua"
+    },
+    {
+        url = "https://raw.githubusercontent.com/CihlaMaximum/ReactorN/refs/heads/main/modules/gui.lua",
+        path = "/modules/gui.lua"
+    },
+    {
+        url = "https://raw.githubusercontent.com/CihlaMaximum/ReactorN/refs/heads/main/modules/me.lua",
+        path = "/modules/me.lua"
+    },
+    {
+        url = "https://raw.githubusercontent.com/CihlaMaximum/ReactorN/refs/heads/main/modules/players.lua",
+        path = "/modules/players.lua"
+    },
+    {
+        url = "https://raw.githubusercontent.com/CihlaMaximum/ReactorN/refs/heads/main/modules/reactors.lua",
+        path = "/modules/reactors.lua"
+    },
+    {
+        url = "https://raw.githubusercontent.com/CihlaMaximum/ReactorN/refs/heads/main/modules/updater.lua",
+        path = "/modules/updater.lua"
     }
+    
 }
 
 -- Функция для создания папки, если она не существует
