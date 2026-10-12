@@ -76,8 +76,13 @@ local function readFluid(controller)
     return nil, false, "No fluid found"
   end
 
-  print("TOTAL=" .. tostring(total) ..
-        " ITEMS=" .. tostring(#items))
+ if component.isAvailable("chat_box") then
+  local chatBox = component.chat_box
+  chatBox.say(
+    "TOTAL=" .. tostring(total) ..
+    " ITEMS=" .. tostring(#items)
+  )
+end
 
   if total > setting(
       "fluidMaxValidValue",
