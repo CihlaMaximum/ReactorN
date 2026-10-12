@@ -13,19 +13,19 @@ local files = {
     },
     {
         url = "https://raw.githubusercontent.com/CihlaMaximum/ReactorN/refs/heads/main/config/config.lua",
-        path = "/config/config.lua"
+        path = "/home/config/config.lua"
     },
     {
         url = "https://raw.githubusercontent.com/CihlaMaximum/ReactorN/refs/heads/main/lib/utils.lua",
-        path = "/lib/utils.lua"
+        path = "/home/lib/utils.lua"
     },
     {
         url = "https://raw.githubusercontent.com/CihlaMaximum/ReactorN/refs/heads/main/modules/chat.lua",
-        path = "/modules/chat.lua"
+        path = "/home/modules/chat.lua"
     },
     {
         url = "https://raw.githubusercontent.com/CihlaMaximum/ReactorN/refs/heads/main/modules/flux.lua",
-        path = "/modules/flux.lua"
+        path = "/home/modules/flux.lua"
     },
     {
         url = "https://raw.githubusercontent.com/CihlaMaximum/ReactorN/refs/heads/main/modules/gui.lua",
@@ -33,19 +33,19 @@ local files = {
     },
     {
         url = "https://raw.githubusercontent.com/CihlaMaximum/ReactorN/refs/heads/main/modules/me.lua",
-        path = "/modules/me.lua"
+        path = "/home/modules/me.lua"
     },
     {
         url = "https://raw.githubusercontent.com/CihlaMaximum/ReactorN/refs/heads/main/modules/players.lua",
-        path = "/modules/players.lua"
+        path = "/home/modules/players.lua"
     },
     {
         url = "https://raw.githubusercontent.com/CihlaMaximum/ReactorN/refs/heads/main/modules/reactors.lua",
-        path = "/modules/reactors.lua"
+        path = "/home/modules/reactors.lua"
     },
     {
         url = "https://raw.githubusercontent.com/CihlaMaximum/ReactorN/refs/heads/main/modules/updater.lua",
-        path = "/modules/updater.lua"
+        path = "/home/modules/updater.lua"
     }
     
 }
