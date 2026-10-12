@@ -53,7 +53,10 @@ local function readFluid(controller)
   if not ok or type(items) ~= "table" then
     return nil, false, "ME query failed"
   end
-
+if #items == 0 then
+  return nil, false, "No fluid items returned"
+end
+  
   local total = 0
   local found = false
 
@@ -63,11 +66,11 @@ local function readFluid(controller)
       local name = tostring(item.name or "")
 
       -- Временно можно раскомментировать
-       print(
-         "NAME=" .. tostring(item.name)
-         .. " LABEL=" .. tostring(item.label)
-         .. " SIZE=" .. tostring(item.size)
-       )
+       --print(
+       --  "NAME=" .. tostring(item.name)
+       --  .. " LABEL=" .. tostring(item.label)
+      --   .. " SIZE=" .. tostring(item.size)
+     --  )
 
       if name == config.fluidItemName then
         total = total + (tonumber(item.size) or 0)
