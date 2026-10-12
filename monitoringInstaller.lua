@@ -29,7 +29,7 @@ local files = {
     },
     {
         url = "https://raw.githubusercontent.com/CihlaMaximum/ReactorN/refs/heads/main/modules/gui.lua",
-        path = "/modules/gui.lua"
+        path = "/home/modules/gui.lua"
     },
     {
         url = "https://raw.githubusercontent.com/CihlaMaximum/ReactorN/refs/heads/main/modules/me.lua",
