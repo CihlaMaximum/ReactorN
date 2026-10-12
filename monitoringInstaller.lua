@@ -1,3 +1,8 @@
+-- wget -f https://raw.githubusercontent.com/CihlaMaximum/ReactorN/refs/heads/main/monitoringInstaller.lua monitoringInstaller.lua 
+-- GitHub Downloader для OpenComputers (через wget)
+-- Скачивает файлы с GitHub и размещает их по нужным папкам
+
+
 local shell=require("shell");local filesystem=require("filesystem")
 local base="https://raw.githubusercontent.com/CihlaMaximum/ReactorN/refs/heads/main/"
 local files={"main.lua","config/config.lua","lib/utils.lua","modules/chat.lua","modules/flux.lua","modules/gui.lua","modules/me.lua","modules/players.lua","modules/reactors.lua","modules/updater.lua"}
