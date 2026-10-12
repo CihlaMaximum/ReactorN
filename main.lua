@@ -983,7 +983,7 @@ end
 end
     
     return currentFluidCount
-end
+
 
 -- Сколько осталось до конца стержней
 local function secondsToHMS(totalSeconds)
