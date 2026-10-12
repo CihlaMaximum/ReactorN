@@ -937,8 +937,7 @@ local function checkFluidInME()
     end
     
     lastMECheck = currentTime
-    if chatBox then
-    chatBox.say("ME CHECK")
+   
 end
     
     -- Проверяем доступность ME контроллера
