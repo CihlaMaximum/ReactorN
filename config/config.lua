@@ -11,7 +11,7 @@ return {
   playerInterval = 1,
   reactorTempWarn = 950,
   expectedReactors = 6,
-  minFluidDrop = 2200000,
+  minFluidDrop = 4500000,
   fluidItemName = "ae2fc:fluid_drop",
   fluidLabel = "low_temperature_refrigerant",
   fluidLowConfirmations = 5,
