@@ -115,12 +115,6 @@ function M.update(force)
 end
 
 function M.getFluid() return M.fluid end
-function M.getRawFluid()
-  if M.readingValid and M.rawFluid ~= nil then
-    return M.rawFluid
-  end
-  return M.fluid
-end
 function M.getCPU() return M.cpu end
 function M.isFluidConfirmedLow() return M.fluidConfirmedLow end
 function M.getLowReadCounter() return M.lowReadCounter end
