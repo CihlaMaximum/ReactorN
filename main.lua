@@ -23,7 +23,7 @@ while true do
   local fluxData = flux.update()
   if fluxData then gui.drawFlux(fluxData) end
 
-  local reactorData = reactors.update(me.getFluid(), false, me.isFluidConfirmedLow())
+  local reactorData = reactors.update(me.getRawFluid(), false, me.isFluidConfirmedLow())
   if reactorData then
     reactorData.coolantForecastSeconds = coolantMonitor.update(
       reactorData.fluidCount,
