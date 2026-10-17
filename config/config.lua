@@ -14,7 +14,7 @@ return {
   minFluidDrop = 4500000,
   fluidItemName = "ae2fc:fluid_drop",
   fluidLabel = "low_temperature_refrigerant",
-  fluidLowConfirmations = 5,
+  fluidLowConfirmations = 2,
   fluidMaxValidValue = 1000000000000,
   reactorCoolantStopRatio = 0.68,
   reactorCoolantRestoreRatio = 0.80,
