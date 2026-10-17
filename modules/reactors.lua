@@ -148,7 +148,10 @@ function M.update(fluid, force, fluidConfirmedLow)
       rodTime = rod, rodColor = rodColor
     }
     result.totalEnergy = result.totalEnergy + energy
+    
+    if liquid and active and consume > 0 then
     result.totalCoolant = result.totalCoolant + consume
+    end
     result.hottest = math.max(result.hottest, temp)
   end
 
