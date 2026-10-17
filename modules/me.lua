@@ -1,13 +1,11 @@
 local component = require("component")
 local computer = require("computer")
 local config = require("config.config")
-
 local function setting(name, fallback)
   local value = tonumber(config[name])
   if value == nil then return fallback end
   return value
 end
-
 local M = {
   last = -1e9,
   fluid = 0,
@@ -18,13 +16,11 @@ local M = {
   fluidConfirmedLow = false,
   cpu = {processors = {}, idle = 0, busy = 0, total = 0}
 }
-
 local function getController()
   if component.isAvailable("me_controller") then return component.me_controller end
   if component.isAvailable("me_interface") then return component.me_interface end
   return nil
 end
-
 local function readCPUs(controller)
   local data = {processors = {}, idle = 0, busy = 0, total = 0}
   if not controller or not controller.getCpus then return data end
@@ -38,7 +34,6 @@ local function readCPUs(controller)
   end
   return data
 end
-
 local function readFluid(controller)
   if not controller or not controller.getItemsInNetwork then
     return nil, false, "ME controller unavailable"
@@ -64,34 +59,26 @@ local function readFluid(controller)
   end
   return total, true, nil
 end
-
 local function processFluid(value, valid)
   M.readingValid = valid
   M.rawFluid = value
-
   if not valid or value == nil then
-    M.fluid = M.lastValidFluid
     return
   end
 
+  -- Always expose the latest valid ME value, including values below STOP.
+  M.fluid = value
+  M.lastValidFluid = value
+
   if value >= setting("minFluidDrop", 1000000) then
-    M.fluid = value
-    M.lastValidFluid = value
     M.lowReadCounter = 0
     M.fluidConfirmedLow = false
     return
   end
 
   M.lowReadCounter = M.lowReadCounter + 1
-  if M.lowReadCounter < setting("fluidLowConfirmations", 5) then
-    M.fluid = M.lastValidFluid
-    M.fluidConfirmedLow = false
-  else
-    M.fluid = value
-    M.fluidConfirmedLow = true
-  end
+  M.fluidConfirmedLow = M.lowReadCounter >= setting("fluidLowConfirmations", 2)
 end
-
 function M.update(force)
   local now = computer.uptime()
   if not force and now - M.last < setting("meInterval", 5) then return nil end
@@ -105,7 +92,7 @@ function M.update(force)
     rawFluid = M.rawFluid,
     lastValidFluid = M.lastValidFluid,
     lowReadCounter = M.lowReadCounter,
-    lowReadLimit = setting("fluidLowConfirmations", 5),
+    lowReadLimit = setting("fluidLowConfirmations", 2),
     readingValid = M.readingValid,
     fluidConfirmedLow = M.fluidConfirmedLow,
     error = err,
@@ -113,7 +100,6 @@ function M.update(force)
     available = controller ~= nil
   }
 end
-
 function M.getFluid() return M.fluid end
 function M.getCPU() return M.cpu end
 function M.isFluidConfirmedLow() return M.fluidConfirmedLow end
