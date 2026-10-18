@@ -5,6 +5,7 @@ local config = require("config.config")
 local gui = require("modules.gui")
 local flux = require("modules.flux")
 local me = require("modules.me")
+local resources = require("modules.resources")
 local reactors = require("modules.reactors")
 local players = require("modules.players")
 local chat = require("modules.chat")
@@ -19,6 +20,8 @@ local lastMissing = 0
 while true do
   local meData = me.update()
   if meData then gui.drawME(meData.cpu) end
+  local resourceData = resources.update()
+  if resourceData then gui.drawResources(resourceData) end
 
   local fluxData = flux.update()
   if fluxData then gui.drawFlux(fluxData) end
