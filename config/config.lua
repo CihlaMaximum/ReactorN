@@ -8,6 +8,12 @@ return {
   rodRefreshInterval = 60,
   rodHardSyncDifference = 120,
   meInterval = 5,
+  resourceInterval = 60,
+  resourceHistorySeconds = 3600,
+  trackedResources = {
+    {key="quartz", label="Кварц", search="quartz"},
+    {key="lapis", label="Лазурит", search="lapis"}
+  },
   playerInterval = 1,
   reactorTempWarn = 950,
   expectedReactors = 6,
