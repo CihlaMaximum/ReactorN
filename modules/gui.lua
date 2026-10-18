@@ -32,7 +32,7 @@ local B = {
 local state = {
   flux={name="Нет данных",input=0,buffer=0,maxInput=0,available=false},
   me={processors={},idle=0,busy=0,total=0,available=false},
-  players={}, reactors=nil, resources={}
+  players={}, reactors=nil, resources={}, resourcesError=nil
 }
 
 local function text(x,y,value) sgui.text(x,y,tostring(value or "")) end
@@ -144,14 +144,22 @@ end
 
 
 local function drawResources()
+  clear(5,10,110)
+  if state.resourcesError then
+    text(5,10,"&cРесурсы ME: "..tostring(state.resourcesError))
+    return
+  end
   local q=state.resources.quartz
   local l=state.resources.lapis
-  clear(5,10,110)
   local function rateText(v)
     v=tonumber(v) or 0
     if v>0 then return C.normal.."+"..formatInteger(v).."/ч" end
     if v<0 then return C.critical..formatInteger(v).."/ч" end
     return C.muted.."0/ч"
+  end
+  if not q and not l then
+    text(5,10,"&eРесурсы ME: нет данных")
+    return
   end
   if q then text(5,10,"&fКварц: &b"..formatInteger(q.count).."  "..rateText(q.rateHour)) end
   if l then text(48,10,"&fЛазурит: &b"..formatInteger(l.count).."  "..rateText(l.rateHour)) end
@@ -259,6 +267,7 @@ end
 function M.drawResources(data)
   if not data then return end
   state.resources=data.items or {}
+  state.resourcesError=data.error
   drawResources()
 end
 function M.drawReactors(data)
