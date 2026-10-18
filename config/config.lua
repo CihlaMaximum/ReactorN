@@ -17,7 +17,7 @@ return {
   fluidLowConfirmations = 2,
   fluidMaxValidValue = 1000000000000,
   reactorCoolantStopRatio = 0.68,
-  reactorCoolantRestoreRatio = 0.80,
+  reactorCoolantRestoreRatio = 0.75,
   autoRestartReactors = true,
   rodWarningSeconds = 86400,
   rodCriticalSeconds = 21600,
