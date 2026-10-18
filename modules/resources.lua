@@ -18,24 +18,23 @@ local function makeDefaults()
  end
 end
 
-local function readAll(c)
- local ok,items=pcall(function() return c.getItemsInNetwork() end)
+local function readResource(controller,r)
+ local filter={}
+ if r.name and r.name~="" then filter.name=r.name end
+ if r.itemLabel and r.itemLabel~="" then filter.label=r.itemLabel end
+
+ local ok,items=pcall(function()
+  return controller.getItemsInNetwork(filter)
+ end)
+
  if not ok or type(items)~="table" then return nil end
- return items
-end
 
-local function count(items,r)
- local wantedName=tostring(r.name or "")
- local wantedLabel=tostring(r.itemLabel or "")
  local total=0
-
  for _,item in ipairs(items) do
   local name=tostring(item.name or "")
   local label=tostring(item.label or "")
-
-  local nameOK=(wantedName=="") or name==wantedName
-  local labelOK=(wantedLabel=="") or label==wantedLabel
-
+  local nameOK=(not r.name or r.name=="") or name==r.name
+  local labelOK=(not r.itemLabel or r.itemLabel=="") or label==r.itemLabel
   if nameOK and labelOK then
    total=total+(tonumber(item.size) or 0)
   end
@@ -44,45 +43,53 @@ local function count(items,r)
  return total
 end
 
+local function updateHistory(r,value,now)
+ local window=tonumber(config.resourceHistorySeconds) or 3600
+ local h=M.history[r.key] or {}
+ h[#h+1]={time=now,count=value}
+
+ while #h>1 and now-h[1].time>window do
+  table.remove(h,1)
+ end
+
+ M.history[r.key]=h
+
+ local dt=now-h[1].time
+ local rate=dt>0 and (value-h[1].count)/dt*3600 or 0
+
+ M.data[r.key]={
+  key=r.key,
+  label=r.label or r.key,
+  count=value,
+  rateHour=rate
+ }
+end
+
 function M.update(force)
  local now=computer.uptime()
- local interval=tonumber(config.resourceInterval) or 60
+ local interval=tonumber(config.resourceInterval) or 5
 
  makeDefaults()
 
  if not force and now-M.last<interval then return nil end
  M.last=now
 
- local c=getController()
- if not c then return {available=false,items=M.data} end
-
- local items=readAll(c)
- if not items then return {available=false,items=M.data} end
-
- local window=tonumber(config.resourceHistorySeconds) or 3600
-
- for _,r in ipairs(config.trackedResources or {}) do
-  local v=count(items,r)
-  local h=M.history[r.key] or {}
-
-  h[#h+1]={time=now,count=v}
-  while #h>1 and now-h[1].time>window do
-   table.remove(h,1)
-  end
-  M.history[r.key]=h
-
-  local dt=now-h[1].time
-  local rate=dt>0 and (v-h[1].count)/dt*3600 or 0
-
-  M.data[r.key]={
-   key=r.key,
-   label=r.label or r.key,
-   count=v,
-   rateHour=rate
-  }
+ local controller=getController()
+ if not controller then
+  return {available=false,items=M.data}
  end
 
- return {available=true,items=M.data}
+ local anySuccess=false
+
+ for _,r in ipairs(config.trackedResources or {}) do
+  local value=readResource(controller,r)
+  if value~=nil then
+   anySuccess=true
+   updateHistory(r,value,now)
+  end
+ end
+
+ return {available=anySuccess,items=M.data}
 end
 
 makeDefaults()
