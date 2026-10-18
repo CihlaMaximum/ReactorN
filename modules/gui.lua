@@ -142,6 +142,20 @@ local function drawStatus()
   text(91,3,"&fFLUX: "..fluxStatus)
 end
 
+
+local function drawResources()
+  local q=state.resources.quartz
+  local l=state.resources.lapis
+  clear(5,10,110)
+  local function rateText(v)
+    v=tonumber(v) or 0
+    if v>0 then return C.normal.."+"..formatInteger(v).."/ч" end
+    if v<0 then return C.critical..formatInteger(v).."/ч" end
+    return C.muted.."0/ч"
+  end
+  if q then text(5,10,"&fКварц: &b"..formatInteger(q.count).."  "..rateText(q.rateHour)) end
+  if l then text(48,10,"&fЛазурит: &b"..formatInteger(l.count).."  "..rateText(l.rateHour)) end
+end
 local function drawCoolantPanel(data)
   local f=F.coolant
   clearArea(f.x+1,f.y+1,f.w-2,f.h-2)
@@ -165,13 +179,6 @@ local function drawCoolantPanel(data)
   drawResources()
 end
 
-local function drawResources()
-  local q=state.resources.quartz; local l=state.resources.lapis
-  clear(5,10,110)
-  local function rt(v) v=tonumber(v) or 0; if v>0 then return "&a+"..formatInteger(v).."/ч" elseif v<0 then return "&c"..formatInteger(v).."/ч" end; return "&8 0/ч" end
-  if q then text(5,10,"&fКварц: &b"..formatInteger(q.count).."  "..rt(q.rateHour)) end
-  if l then text(48,10,"&fЛазурит: &b"..formatInteger(l.count).."  "..rt(l.rateHour)) end
-end
 local function drawReactorCard(index,q,data)
   local f=F.reactors
   local col=(index-1)%3; local row=math.floor((index-1)/3)
