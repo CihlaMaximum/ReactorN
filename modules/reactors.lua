@@ -2,13 +2,11 @@ local component = require("component")
 local computer = require("computer")
 local config = require("config.config")
 local utils = require("lib.utils")
-
 local function setting(name, fallback)
   local value = tonumber(config[name])
   if value == nil then return fallback end
   return value
 end
-
 local M = {
   last = -1e9,
   lastScan = -1e9,
@@ -19,7 +17,6 @@ local M = {
   shutdownByCoolant = {}
 }
 local countFile = config.dataDir .. "/reactorInfo.txt"
-
 local function scan(force)
   local now = computer.uptime()
   if not force and now - M.lastScan < setting("reactorScanInterval", 30) then return M.entries end
@@ -35,7 +32,6 @@ local function scan(force)
   M.entries = out
   return out
 end
-
 local function safe(default, fn)
   if utils.safe then return utils.safe(default, fn) end
   if utils.safeCall then return utils.safeCall(default, fn) end
@@ -43,7 +39,6 @@ local function safe(default, fn)
   if ok and value ~= nil then return value, true end
   return default, false
 end
-
 local function realRodTime(r)
   local ok, rods = pcall(function() return r.getAllFuelRodsStatus() end)
   if not ok or type(rods) ~= "table" then return nil end
@@ -51,7 +46,6 @@ local function realRodTime(r)
   for _, rod in ipairs(rods) do maximum = math.max(maximum, tonumber(rod[6]) or 0) end
   return math.floor(maximum)
 end
-
 local function syncRods(entries, force)
   local now = computer.uptime()
   if not force and now - M.lastRodRefresh < setting("rodRefreshInterval", 60) then return end
@@ -69,8 +63,11 @@ local function applySafety(entries, data, fluidConfirmedLow)
     if d and d.liquid then
       local address = entry.address
       local working = d.activated == true
-      local lowBuffer = d.coolantCapacity > 0 and d.coolantRatio <= setting("reactorCoolantStopRatio", 0.68)
+      local stopRatio = setting("reactorCoolantStopRatio", 0.68)
+      local restoreRatio = setting("reactorCoolantRestoreRatio", 0.80)
+      local lowBuffer = d.coolantCapacity > 0 and d.coolantRatio <= stopRatio
 
+      -- Stop after confirmed low ME coolant level.
       if fluidConfirmedLow and working then
         local ok = pcall(function() r.deactivate() end)
         if ok then
@@ -80,25 +77,43 @@ local function applySafety(entries, data, fluidConfirmedLow)
         end
       end
 
+      -- Stop if the reactor's internal coolant buffer is too low.
       if lowBuffer and working then
         local ok = pcall(function() r.deactivate() end)
         if ok then
           M.shutdownByCoolant[address] = true
           d.activated, d.online = false, false
+          working = false
         end
       end
 
-      local restored = not fluidConfirmedLow
-        and d.coolantCapacity > 0
-        and d.coolantRatio >= setting("reactorCoolantRestoreRatio", 0.80)
+      local meRestored = not fluidConfirmedLow
+      local coolantRestored = d.coolantCapacity > 0 and d.coolantRatio >= restoreRatio
+      local stoppedBySystem = M.shutdownByME[address] or M.shutdownByCoolant[address]
 
-      if config.autoRestartReactors ~= false and restored
-        and (M.shutdownByME[address] or M.shutdownByCoolant[address]) then
-        local ok = pcall(function() r.activate() end)
-        if ok then
+      -- Auto-restart only reactors previously stopped by ReactorN.
+      -- Do not clear stop flags merely because activate() did not throw:
+      -- confirm the reactor actually reports hasWork() == true.
+      if config.autoRestartReactors ~= false
+        and not working
+        and stoppedBySystem
+        and meRestored
+        and coolantRestored then
+
+        pcall(function() r.activate() end)
+
+        local started = select(1, safe(false, function()
+          return r.hasWork()
+        end))
+
+        if started then
           M.shutdownByME[address] = nil
           M.shutdownByCoolant[address] = nil
           d.activated, d.online = true, true
+          working = true
+        else
+          -- Keep flags so the next update can retry activation.
+          d.activated, d.online = false, false
         end
       end
     end
@@ -110,11 +125,9 @@ function M.update(fluid, force, fluidConfirmedLow)
   if not force and now - M.last < setting("reactorInterval", 1) then return nil end
   local delta = M.last < 0 and 0 or math.max(0, now - M.last)
   M.last = now
-
   for address, value in pairs(M.rodCache) do
     M.rodCache[address] = math.max(0, value - delta)
   end
-
   local entries = scan(force)
   syncRods(entries, force)
   local result = {
@@ -122,7 +135,6 @@ function M.update(fluid, force, fluidConfirmedLow)
     totalCoolant = 0, hottest = 0, fluidCount = fluid or 0,
     fluidConfirmedLow = fluidConfirmedLow == true
   }
-
   for i, entry in ipairs(entries) do
     local r = entry.proxy
     if M.rodCache[entry.address] == nil then M.rodCache[entry.address] = realRodTime(r) or 0 end
@@ -138,7 +150,6 @@ function M.update(fluid, force, fluidConfirmedLow)
     local rod = M.rodCache[entry.address] or 0
     local rodColor = rod < setting("rodCriticalSeconds", 21600) and "&c"
       or (rod < setting("rodWarningSeconds", 86400) and "&e" or "&a")
-
     result.reactors[i] = {
       id = i, address = entry.address, online = active, activated = active,
       level = level, liquid = liquid,
@@ -149,11 +160,10 @@ function M.update(fluid, force, fluidConfirmedLow)
     }
     result.totalEnergy = result.totalEnergy + energy
     if liquid and active and consume > 0 then
-    result.totalCoolant = result.totalCoolant + consume
+      result.totalCoolant = result.totalCoolant + consume
     end
     result.hottest = math.max(result.hottest, temp)
   end
-
   applySafety(entries, result.reactors, fluidConfirmedLow == true)
   local storedCount = utils.readNumber(countFile, 0)
   if storedCount == 0 or result.count > storedCount then
