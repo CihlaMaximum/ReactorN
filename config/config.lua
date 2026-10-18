@@ -3,7 +3,7 @@ return {
  reactorScanInterval=30, rodRefreshInterval=60, rodHardSyncDifference=120, meInterval=5,
  resourceInterval=10, resourceHistorySeconds=3600,
  trackedResources={{key="quartz",label="Кварц",name="minecraft:quartz",itemLabel="Nether Quartz"},{key="lapis",label="Лазурит",name="minecraft:dye",itemLabel="Lapis Lazuli"}},
- playerInterval=1, reactorTempWarn=950, expectedReactors=6, minFluidDrop=4100000,
+ playerInterval=1, reactorTempWarn=950, expectedReactors=6, minFluidDrop=4000000,
  fluidItemName="ae2fc:fluid_drop", fluidLabel="low_temperature_refrigerant", fluidLowConfirmations=2,
  fluidMaxValidValue=1000000000000, reactorCoolantStopRatio=0.68, reactorCoolantRestoreRatio=0.72,
  autoRestartReactors=true, rodWarningSeconds=86400, rodCriticalSeconds=21600,
