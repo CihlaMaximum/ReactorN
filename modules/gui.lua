@@ -16,11 +16,11 @@ local C = {
 }
 
 local F = {
-  status={x=2,y=2,w=118,h=3,title=""},
+  status={x=2,y=2,w=118,h=3,title="Статус систем"},
   coolant={x=2,y=5,w=118,h=7,title="Хладагент"},
   reactors={x=2,y=12,w=118,h=20,title="Реакторы"},
-  summary={x=2,y=32,w=118,h=3,title=""},
-  systems={x=2,y=35,w=118,h=3,title=""}
+  summary={x=2,y=32,w=118,h=3,title="Инфографика"},
+  systems={x=2,y=35,w=118,h=3,title="Энергия"}
 }
 
 local B = {
